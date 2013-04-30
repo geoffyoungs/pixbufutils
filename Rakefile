@@ -22,7 +22,7 @@ spec = Gem::Specification.new do |s|
 	s.name = "pixbufutils"
 	s.author = "Geoff Youngs"
 	s.email = "git@intersect-uk.co.uk"
-	s.version = "0.0.1"
+	s.version = "0.0.2"
 	s.homepage = "http://github.com/geoffyoungs/pixbufutils"
 	s.summary = "Additional utils for Gdk::Pixbuf"
 	s.add_dependency("rubber-generate", ">= 0.0.17")
@@ -30,7 +30,7 @@ spec = Gem::Specification.new do |s|
 	s.add_dependency("gdk_pixbuf2", ">= 1.1.6")
 	s.platform = Gem::Platform::RUBY
 	s.extensions = FileList["ext/*/extconf.rb"]
-	s.files = FileList['ext/*/*.{c,h,cr,rd}'] + ['Rakefile', 'README.md']
+	s.files = FileList['ext/*/*.{c,h,cr,rd}'] + ['Rakefile', 'README.md'] + FileList['lib/**/*.rb']
 s.description = <<-EOF
 Misc functions for alpha channel extraction, gamma, tinting, masking, blur etc.
 EOF

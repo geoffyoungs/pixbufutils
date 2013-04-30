@@ -1,0 +1,17 @@
+GEM
+  specs:
+    glib2 (2.0.0)
+      pkg-config
+    pkg-config (1.1.4)
+    rake (10.0.3)
+    rake-compiler (0.8.3)
+      rake
+    rubber-generate (0.0.17)
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  glib2
+  rake-compiler
+  rubber-generate
