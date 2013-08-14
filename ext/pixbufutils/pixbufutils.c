@@ -54,7 +54,7 @@ PixbufUtils_CLASS_greyscale_go_pling(VALUE self, VALUE __v_src);
 static VALUE
 PixbufUtils_CLASS_greyscale_go(VALUE self, VALUE __v_src);
 static VALUE
-PixbufUtils_CLASS_tint(VALUE self, VALUE __v_src, VALUE __v_r, VALUE __v_g, VALUE __v_b);
+PixbufUtils_CLASS_tint(int __p_argc, VALUE *__p_argv, VALUE self);
 static VALUE
 PixbufUtils_CLASS_perspect_v(VALUE self, VALUE __v_src, VALUE __v_top_x1, VALUE __v_top_x2, VALUE __v_bot_x1, VALUE __v_bot_x2);
 static VALUE
@@ -1089,12 +1089,13 @@ static GdkPixbuf *pixbuf_greyscale_go(GdkPixbuf *src, GdkPixbuf *dest)
 	return dest;
 }
 
-static inline char pu_clamp(int x, int min, int max)
+static inline unsigned char pu_clamp(int x)
 {
-	return  (x > max) ? max : (x < min ? min : x);
+ 	unsigned char i = (x > 255) ? 255 : (x < 0 ? 0 : x);
+  return i;
 }
 
-static GdkPixbuf *pixbuf_tint(GdkPixbuf *src, GdkPixbuf *dest, int r, int g, int b)
+static GdkPixbuf *pixbuf_tint(GdkPixbuf *src, GdkPixbuf *dest, int r, int g, int b, int alpha)
 {
 	int        s_has_alpha, d_has_alpha;
 	int        s_width, s_height, s_rowstride;
@@ -1130,10 +1131,13 @@ static GdkPixbuf *pixbuf_tint(GdkPixbuf *src, GdkPixbuf *dest, int r, int g, int
 		
 		for (j = 0; j < s_width; j++) {
 			grey = GO_RGB_TO_GREY(sp[0], sp[1], sp[2]);
-			
-			dp[0] = pu_clamp(grey + r, 0, 255);	/* red */
-			dp[1] = pu_clamp(grey + g, 0, 255);	/* green */
-			dp[2] = pu_clamp(grey + b, 0, 255);	/* blue */
+
+			dp[0] = pu_clamp(pu_clamp(((int)grey + r) * alpha / 255) + pu_clamp((int)sp[0] * (255 - alpha) / 255));	/* red */
+
+			//fprintf(stderr, "alpha=%i, r=%i, grey=%i -> %i + %i = %i\n", alpha, r, grey, pu_clamp(((int)grey + r) * alpha / 255), pu_clamp((int)sp[0] * (255 - alpha) / 255), dp[0]);	/* red */
+
+			dp[1] = pu_clamp(pu_clamp((grey + g) * alpha / 255) + pu_clamp((int)sp[1] * (255 - alpha) / 255));	/* green */
+			dp[2] = pu_clamp(pu_clamp((grey + b) * alpha / 255) + pu_clamp((int)sp[2] * (255 - alpha) / 255));	/* blue */
 			
 			if (s_has_alpha) 
 			{
@@ -1405,7 +1409,7 @@ PixbufUtils_CLASS_remove_alpha(VALUE self, VALUE __v_src, VALUE __v_col)
   __orig_src = src = GDK_PIXBUF(RVAL2GOBJ(__v_src));
   __orig_col = col = RVAL2BOXED(__v_col, GDK_TYPE_COLOR);
 
-#line 1360 "/home/geoff/Projects/pixbufutils/ext/pixbufutils/pixbufutils.cr"
+#line 1364 "/home/geoff/Projects/pixbufutils/ext/pixbufutils/pixbufutils.cr"
 
   do {
   GdkPixbuf * dest  ;
@@ -1437,7 +1441,7 @@ PixbufUtils_CLASS_sharpen(VALUE self, VALUE __v_src, VALUE __v_radius)
   __orig_src = src = GDK_PIXBUF(RVAL2GOBJ(__v_src));
   __orig_radius = radius = NUM2INT(__v_radius);
 
-#line 1381 "/home/geoff/Projects/pixbufutils/ext/pixbufutils/pixbufutils.cr"
+#line 1385 "/home/geoff/Projects/pixbufutils/ext/pixbufutils/pixbufutils.cr"
   IGNORE(self);
   do { __p_retval = unref_pixbuf((pixbuf_sharpen(src, radius))); goto out; } while(0);
 out:
@@ -1473,7 +1477,7 @@ PixbufUtils_CLASS_extract_alpha(int __p_argc, VALUE *__p_argv, VALUE self)
     force_2bit = FALSE;
 
 
-#line 1385 "/home/geoff/Projects/pixbufutils/ext/pixbufutils/pixbufutils.cr"
+#line 1389 "/home/geoff/Projects/pixbufutils/ext/pixbufutils/pixbufutils.cr"
   IGNORE(self);
   do { __p_retval = unref_pixbuf((pixbuf_extract_alpha(src, cutoff, force_2bit))); goto out; } while(0);
 out:
@@ -1490,7 +1494,7 @@ PixbufUtils_CLASS_blur(VALUE self, VALUE __v_src, VALUE __v_radius)
   __orig_src = src = GDK_PIXBUF(RVAL2GOBJ(__v_src));
   __orig_radius = radius = NUM2INT(__v_radius);
 
-#line 1389 "/home/geoff/Projects/pixbufutils/ext/pixbufutils/pixbufutils.cr"
+#line 1393 "/home/geoff/Projects/pixbufutils/ext/pixbufutils/pixbufutils.cr"
   IGNORE(self);
   do { __p_retval = unref_pixbuf((pixbuf_blur(gdk_pixbuf_copy(src), radius))); goto out; } while(0);
 out:
@@ -1507,7 +1511,7 @@ PixbufUtils_CLASS_rotate_90(VALUE self, VALUE __v_src, VALUE __v_counter_clockwi
   __orig_src = src = GDK_PIXBUF(RVAL2GOBJ(__v_src));
   __orig_counter_clockwise = counter_clockwise = RTEST(__v_counter_clockwise);
 
-#line 1393 "/home/geoff/Projects/pixbufutils/ext/pixbufutils/pixbufutils.cr"
+#line 1397 "/home/geoff/Projects/pixbufutils/ext/pixbufutils/pixbufutils.cr"
   IGNORE(self);
   do { __p_retval = unref_pixbuf((pixbuf_rotate(src, counter_clockwise ? ANGLE_270 : ANGLE_90))); goto out; } while(0);
 out:
@@ -1522,7 +1526,7 @@ PixbufUtils_CLASS_rotate_cw(VALUE self, VALUE __v_src)
   GdkPixbuf * src; GdkPixbuf * __orig_src;
   __orig_src = src = GDK_PIXBUF(RVAL2GOBJ(__v_src));
 
-#line 1397 "/home/geoff/Projects/pixbufutils/ext/pixbufutils/pixbufutils.cr"
+#line 1401 "/home/geoff/Projects/pixbufutils/ext/pixbufutils/pixbufutils.cr"
   IGNORE(self);
   do { __p_retval = unref_pixbuf((pixbuf_rotate(src, ANGLE_90))); goto out; } while(0);
 out:
@@ -1537,7 +1541,7 @@ PixbufUtils_CLASS_rotate_180(VALUE self, VALUE __v_src)
   GdkPixbuf * src; GdkPixbuf * __orig_src;
   __orig_src = src = GDK_PIXBUF(RVAL2GOBJ(__v_src));
 
-#line 1401 "/home/geoff/Projects/pixbufutils/ext/pixbufutils/pixbufutils.cr"
+#line 1405 "/home/geoff/Projects/pixbufutils/ext/pixbufutils/pixbufutils.cr"
   IGNORE(self);
   do { __p_retval = unref_pixbuf((pixbuf_rotate(src, ANGLE_180))); goto out; } while(0);
 out:
@@ -1554,7 +1558,7 @@ PixbufUtils_CLASS_rotate(VALUE self, VALUE __v_src, VALUE __v_angle)
   __orig_src = src = GDK_PIXBUF(RVAL2GOBJ(__v_src));
   __orig_angle = angle = NUM2INT(__v_angle);
 
-#line 1405 "/home/geoff/Projects/pixbufutils/ext/pixbufutils/pixbufutils.cr"
+#line 1409 "/home/geoff/Projects/pixbufutils/ext/pixbufutils/pixbufutils.cr"
   IGNORE(self);
   g_assert(angle == 0 || angle == 90 || angle == 180 || angle == 270);
   do { __p_retval = unref_pixbuf((pixbuf_rotate(src, (rotate_angle_t)angle))); goto out; } while(0);
@@ -1570,7 +1574,7 @@ PixbufUtils_CLASS_rotate_ccw(VALUE self, VALUE __v_src)
   GdkPixbuf * src; GdkPixbuf * __orig_src;
   __orig_src = src = GDK_PIXBUF(RVAL2GOBJ(__v_src));
 
-#line 1410 "/home/geoff/Projects/pixbufutils/ext/pixbufutils/pixbufutils.cr"
+#line 1414 "/home/geoff/Projects/pixbufutils/ext/pixbufutils/pixbufutils.cr"
   IGNORE(self);
   do { __p_retval = unref_pixbuf((pixbuf_rotate(src, ANGLE_270))); goto out; } while(0);
 out:
@@ -1587,7 +1591,7 @@ PixbufUtils_CLASS_gamma_pling(VALUE self, VALUE __v_src, VALUE __v_level)
   __orig_src = src = GDK_PIXBUF(RVAL2GOBJ(__v_src));
   __orig_level = level = NUM2DBL(__v_level);
 
-#line 1414 "/home/geoff/Projects/pixbufutils/ext/pixbufutils/pixbufutils.cr"
+#line 1418 "/home/geoff/Projects/pixbufutils/ext/pixbufutils/pixbufutils.cr"
   IGNORE(self);
   do { __p_retval = GOBJ2RVAL(pixbuf_gamma(src, src, level)); goto out; } while(0);
 out:
@@ -1604,7 +1608,7 @@ PixbufUtils_CLASS_soften_edges_pling(VALUE self, VALUE __v_src, VALUE __v_size)
   __orig_src = src = GDK_PIXBUF(RVAL2GOBJ(__v_src));
   __orig_size = size = NUM2INT(__v_size);
 
-#line 1418 "/home/geoff/Projects/pixbufutils/ext/pixbufutils/pixbufutils.cr"
+#line 1422 "/home/geoff/Projects/pixbufutils/ext/pixbufutils/pixbufutils.cr"
   IGNORE(self);
   do { __p_retval = GOBJ2RVAL(pixbuf_soften_edges(src, size)); goto out; } while(0);
 out:
@@ -1621,7 +1625,7 @@ PixbufUtils_CLASS_gamma(VALUE self, VALUE __v_src, VALUE __v_level)
   __orig_src = src = GDK_PIXBUF(RVAL2GOBJ(__v_src));
   __orig_level = level = NUM2DBL(__v_level);
 
-#line 1422 "/home/geoff/Projects/pixbufutils/ext/pixbufutils/pixbufutils.cr"
+#line 1426 "/home/geoff/Projects/pixbufutils/ext/pixbufutils/pixbufutils.cr"
   IGNORE(self);
   do { __p_retval = unref_pixbuf((pixbuf_gamma(src, gdk_pixbuf_copy(src), level))); goto out; } while(0);
 out:
@@ -1636,7 +1640,7 @@ PixbufUtils_CLASS_greyscale_pling(VALUE self, VALUE __v_src)
   GdkPixbuf * src; GdkPixbuf * __orig_src;
   __orig_src = src = GDK_PIXBUF(RVAL2GOBJ(__v_src));
 
-#line 1426 "/home/geoff/Projects/pixbufutils/ext/pixbufutils/pixbufutils.cr"
+#line 1430 "/home/geoff/Projects/pixbufutils/ext/pixbufutils/pixbufutils.cr"
   IGNORE(self);
   do { __p_retval = GOBJ2RVAL(pixbuf_greyscale(src, src)); goto out; } while(0);
 out:
@@ -1653,7 +1657,7 @@ PixbufUtils_CLASS_to_tiff(VALUE self, VALUE __v_src, VALUE __v_filename)
   __orig_src = src = GDK_PIXBUF(RVAL2GOBJ(__v_src));
   __orig_filename = filename = ( NIL_P(__v_filename) ? NULL : StringValuePtr(__v_filename) );
 
-#line 1430 "/home/geoff/Projects/pixbufutils/ext/pixbufutils/pixbufutils.cr"
+#line 1434 "/home/geoff/Projects/pixbufutils/ext/pixbufutils/pixbufutils.cr"
   IGNORE(self);
   do { __p_retval =  ((pixbuf_save_tiff(src, filename)) ? Qtrue : Qfalse); goto out; } while(0);
 out:
@@ -1668,7 +1672,7 @@ PixbufUtils_CLASS_greyscale(VALUE self, VALUE __v_src)
   GdkPixbuf * src; GdkPixbuf * __orig_src;
   __orig_src = src = GDK_PIXBUF(RVAL2GOBJ(__v_src));
 
-#line 1434 "/home/geoff/Projects/pixbufutils/ext/pixbufutils/pixbufutils.cr"
+#line 1438 "/home/geoff/Projects/pixbufutils/ext/pixbufutils/pixbufutils.cr"
   IGNORE(self);
   do { __p_retval = unref_pixbuf((pixbuf_greyscale(src, gdk_pixbuf_copy(src)))); goto out; } while(0);
 out:
@@ -1683,7 +1687,7 @@ PixbufUtils_CLASS_greyscale_go_pling(VALUE self, VALUE __v_src)
   GdkPixbuf * src; GdkPixbuf * __orig_src;
   __orig_src = src = GDK_PIXBUF(RVAL2GOBJ(__v_src));
 
-#line 1438 "/home/geoff/Projects/pixbufutils/ext/pixbufutils/pixbufutils.cr"
+#line 1442 "/home/geoff/Projects/pixbufutils/ext/pixbufutils/pixbufutils.cr"
   IGNORE(self);
   do { __p_retval = GOBJ2RVAL(pixbuf_greyscale_go(src, src)); goto out; } while(0);
 out:
@@ -1698,7 +1702,7 @@ PixbufUtils_CLASS_greyscale_go(VALUE self, VALUE __v_src)
   GdkPixbuf * src; GdkPixbuf * __orig_src;
   __orig_src = src = GDK_PIXBUF(RVAL2GOBJ(__v_src));
 
-#line 1442 "/home/geoff/Projects/pixbufutils/ext/pixbufutils/pixbufutils.cr"
+#line 1446 "/home/geoff/Projects/pixbufutils/ext/pixbufutils/pixbufutils.cr"
   IGNORE(self);
   do { __p_retval = unref_pixbuf((pixbuf_greyscale_go(src, gdk_pixbuf_copy(src)))); goto out; } while(0);
 out:
@@ -1707,21 +1711,41 @@ out:
 }
 
 static VALUE
-PixbufUtils_CLASS_tint(VALUE self, VALUE __v_src, VALUE __v_r, VALUE __v_g, VALUE __v_b)
+PixbufUtils_CLASS_tint(int __p_argc, VALUE *__p_argv, VALUE self)
 {
   VALUE __p_retval = Qnil;
+  VALUE __v_src = Qnil;
   GdkPixbuf * src; GdkPixbuf * __orig_src;
+  VALUE __v_r = Qnil;
   int r; int __orig_r;
+  VALUE __v_g = Qnil;
   int g; int __orig_g;
+  VALUE __v_b = Qnil;
   int b; int __orig_b;
+  VALUE __v_alpha = Qnil;
+  int alpha; int __orig_alpha;
+
+  /* Scan arguments */
+  rb_scan_args(__p_argc, __p_argv, "41",&__v_src, &__v_r, &__v_g, &__v_b, &__v_alpha);
+
+  /* Set defaults */
   __orig_src = src = GDK_PIXBUF(RVAL2GOBJ(__v_src));
+
   __orig_r = r = NUM2INT(__v_r);
+
   __orig_g = g = NUM2INT(__v_g);
+
   __orig_b = b = NUM2INT(__v_b);
 
-#line 1446 "/home/geoff/Projects/pixbufutils/ext/pixbufutils/pixbufutils.cr"
+  if (__p_argc > 4)
+    __orig_alpha = alpha = NUM2INT(__v_alpha);
+  else
+    alpha = 255;
+
+
+#line 1450 "/home/geoff/Projects/pixbufutils/ext/pixbufutils/pixbufutils.cr"
   IGNORE(self);
-  do { __p_retval = unref_pixbuf((pixbuf_tint(src, gdk_pixbuf_copy(src), r, g, b))); goto out; } while(0);
+  do { __p_retval = unref_pixbuf((pixbuf_tint(src, gdk_pixbuf_copy(src), r, g, b, alpha))); goto out; } while(0);
 out:
 ;
   return __p_retval;
@@ -1742,7 +1766,7 @@ PixbufUtils_CLASS_perspect_v(VALUE self, VALUE __v_src, VALUE __v_top_x1, VALUE 
   __orig_bot_x1 = bot_x1 = NUM2INT(__v_bot_x1);
   __orig_bot_x2 = bot_x2 = NUM2INT(__v_bot_x2);
 
-#line 1450 "/home/geoff/Projects/pixbufutils/ext/pixbufutils/pixbufutils.cr"
+#line 1454 "/home/geoff/Projects/pixbufutils/ext/pixbufutils/pixbufutils.cr"
   IGNORE(self);
   do { __p_retval = unref_pixbuf((pixbuf_perspect_v(src, top_x1, top_x2, bot_x1, bot_x2))); goto out; } while(0);
 out:
@@ -1759,7 +1783,7 @@ PixbufUtils_CLASS_mask(VALUE self, VALUE __v_src, VALUE __v_mask)
   __orig_src = src = GDK_PIXBUF(RVAL2GOBJ(__v_src));
   __orig_mask = mask = GDK_PIXBUF(RVAL2GOBJ(__v_mask));
 
-#line 1454 "/home/geoff/Projects/pixbufutils/ext/pixbufutils/pixbufutils.cr"
+#line 1458 "/home/geoff/Projects/pixbufutils/ext/pixbufutils/pixbufutils.cr"
   IGNORE(self);
   do { __p_retval = unref_pixbuf((pixbuf_mask(src, mask))); goto out; } while(0);
 out:
@@ -1777,7 +1801,7 @@ PixbufUtils_CLASS_blend5050(VALUE self, VALUE __v_src1, VALUE __v_src2)
   __orig_src1 = src1 = GDK_PIXBUF(RVAL2GOBJ(__v_src1));
   __orig_src2 = src2 = GDK_PIXBUF(RVAL2GOBJ(__v_src2));
 
-#line 1458 "/home/geoff/Projects/pixbufutils/ext/pixbufutils/pixbufutils.cr"
+#line 1462 "/home/geoff/Projects/pixbufutils/ext/pixbufutils/pixbufutils.cr"
   IGNORE(self);
   do { __p_retval = unref_pixbuf((pixbuf_blend5050(src1, src2))); goto out; } while(0);
 out:
@@ -1807,7 +1831,7 @@ PixbufUtils_CLASS_mask_area(int __p_argc, VALUE *__p_argv, VALUE self)
     cutoff = 127;
 
 
-#line 1462 "/home/geoff/Projects/pixbufutils/ext/pixbufutils/pixbufutils.cr"
+#line 1466 "/home/geoff/Projects/pixbufutils/ext/pixbufutils/pixbufutils.cr"
   IGNORE(self);
   do { __p_retval = pixbuf_mask_area(mask, cutoff); goto out; } while(0);
 out:
@@ -1840,7 +1864,7 @@ PixbufUtils_CLASS_scale_max(int __p_argc, VALUE *__p_argv, VALUE self)
     interp = GDK_INTERP_BILINEAR;
 
 
-#line 1466 "/home/geoff/Projects/pixbufutils/ext/pixbufutils/pixbufutils.cr"
+#line 1470 "/home/geoff/Projects/pixbufutils/ext/pixbufutils/pixbufutils.cr"
 
   do {
   gulong width, height, largest;
@@ -1902,7 +1926,7 @@ PixbufUtils_CLASS_draw_scaled(int __p_argc, VALUE *__p_argv, VALUE self)
     interp = GDK_INTERP_BILINEAR;
 
 
-#line 1484 "/home/geoff/Projects/pixbufutils/ext/pixbufutils/pixbufutils.cr"
+#line 1488 "/home/geoff/Projects/pixbufutils/ext/pixbufutils/pixbufutils.cr"
 
   do {
   GdkPixbuf * tmp  ;
@@ -1970,7 +1994,7 @@ PixbufUtils_CLASS_draw_scaled_clip(int __p_argc, VALUE *__p_argv, VALUE self)
     interp = GDK_INTERP_BILINEAR;
 
 
-#line 1520 "/home/geoff/Projects/pixbufutils/ext/pixbufutils/pixbufutils.cr"
+#line 1524 "/home/geoff/Projects/pixbufutils/ext/pixbufutils/pixbufutils.cr"
 
   do {
   GdkPixbuf * tmp  ;
@@ -2020,7 +2044,7 @@ Init_pixbufutils(void)
   rb_define_singleton_method(mPixbufUtils, "greyscale", PixbufUtils_CLASS_greyscale, 1);
   rb_define_singleton_method(mPixbufUtils, "greyscale_go!", PixbufUtils_CLASS_greyscale_go_pling, 1);
   rb_define_singleton_method(mPixbufUtils, "greyscale_go", PixbufUtils_CLASS_greyscale_go, 1);
-  rb_define_singleton_method(mPixbufUtils, "tint", PixbufUtils_CLASS_tint, 4);
+  rb_define_singleton_method(mPixbufUtils, "tint", PixbufUtils_CLASS_tint, -1);
   rb_define_singleton_method(mPixbufUtils, "perspect_v", PixbufUtils_CLASS_perspect_v, 5);
   rb_define_singleton_method(mPixbufUtils, "mask", PixbufUtils_CLASS_mask, 2);
   rb_define_singleton_method(mPixbufUtils, "blend5050", PixbufUtils_CLASS_blend5050, 2);

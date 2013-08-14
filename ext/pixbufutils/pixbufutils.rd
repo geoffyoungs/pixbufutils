@@ -50,7 +50,7 @@
 --- PixbufUtils.greyscale_go(GdkPixbuf* src)
 
 
---- PixbufUtils.tint(GdkPixbuf* src, Integer r, Integer g, Integer b)
+--- PixbufUtils.tint(GdkPixbuf* src, Integer r, Integer g, Integer b, Integer alpha)
 
 
 --- PixbufUtils.perspect_v(GdkPixbuf* src, Integer top_x1, Integer top_x2, Integer bot_x1, Integer bot_x2)

@@ -1036,12 +1036,13 @@ static GdkPixbuf *pixbuf_greyscale_go(GdkPixbuf *src, GdkPixbuf *dest)
 	return dest;
 }
 
-static inline char pu_clamp(int x, int min, int max)
+static inline unsigned char pu_clamp(int x)
 {
-	return  (x > max) ? max : (x < min ? min : x);
+ 	unsigned char i = (x > 255) ? 255 : (x < 0 ? 0 : x);
+  return i;
 }
 
-static GdkPixbuf *pixbuf_tint(GdkPixbuf *src, GdkPixbuf *dest, int r, int g, int b)
+static GdkPixbuf *pixbuf_tint(GdkPixbuf *src, GdkPixbuf *dest, int r, int g, int b, int alpha)
 {
 	int        s_has_alpha, d_has_alpha;
 	int        s_width, s_height, s_rowstride;
@@ -1077,10 +1078,13 @@ static GdkPixbuf *pixbuf_tint(GdkPixbuf *src, GdkPixbuf *dest, int r, int g, int
 		
 		for (j = 0; j < s_width; j++) {
 			grey = GO_RGB_TO_GREY(sp[0], sp[1], sp[2]);
-			
-			dp[0] = pu_clamp(grey + r, 0, 255);	/* red */
-			dp[1] = pu_clamp(grey + g, 0, 255);	/* green */
-			dp[2] = pu_clamp(grey + b, 0, 255);	/* blue */
+
+			dp[0] = pu_clamp(pu_clamp(((int)grey + r) * alpha / 255) + pu_clamp((int)sp[0] * (255 - alpha) / 255));	/* red */
+
+			//fprintf(stderr, "alpha=%i, r=%i, grey=%i -> %i + %i = %i\n", alpha, r, grey, pu_clamp(((int)grey + r) * alpha / 255), pu_clamp((int)sp[0] * (255 - alpha) / 255), dp[0]);	/* red */
+
+			dp[1] = pu_clamp(pu_clamp((grey + g) * alpha / 255) + pu_clamp((int)sp[1] * (255 - alpha) / 255));	/* green */
+			dp[2] = pu_clamp(pu_clamp((grey + b) * alpha / 255) + pu_clamp((int)sp[2] * (255 - alpha) / 255));	/* blue */
 			
 			if (s_has_alpha) 
 			{
@@ -1443,9 +1447,9 @@ module PixbufUtils
     IGNORE(self);
 		return pixbuf_greyscale_go(src, gdk_pixbuf_copy(src));
 	end
-	def unref_pixbuf:self.tint(GdkPixbuf *src, int r, int g, int b)
+	def unref_pixbuf:self.tint(GdkPixbuf *src, int r, int g, int b, int alpha=255)
     IGNORE(self);
-		return pixbuf_tint(src, gdk_pixbuf_copy(src), r, g, b);
+		return pixbuf_tint(src, gdk_pixbuf_copy(src), r, g, b, alpha);
 	end
 	def unref_pixbuf:self.perspect_v(GdkPixbuf *src, int top_x1, int top_x2, int bot_x1, int bot_x2)
     IGNORE(self);
