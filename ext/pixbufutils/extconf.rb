@@ -19,24 +19,69 @@ end
 # Look for headers in {gem_root}/ext/{package}
 if use_gems
   %w[
- glib2    ].each do |package|
-      require package
-      $CFLAGS += " -I"+Gem.loaded_specs[package].full_gem_path+"/ext/"+package
+ glib2].each do |package|
+    require package
+    if Gem.loaded_specs[package]
+      $CFLAGS += " -I" + Gem.loaded_specs[package].full_gem_path + "/ext/" + package
+    else
+      if fn = $".find { |n| n.sub(/[.](so|rb)$/,'') == package }
+        dr = $:.find { |d| File.exist?(File.join(d, fn)) }
+        pt = File.join(dr,fn) if dr && fn
+      else
+        pt = "??"
+      end
+      STDERR.puts "require '" + package + "' loaded '"+pt+"' instead of the gem - trying to continue, but build may fail"
+    end
   end
 end
 if RbConfig::CONFIG.has_key?('rubyhdrdir')
-$CFLAGS += " -I" + RbConfig::CONFIG['rubyhdrdir']+'/ruby'
+  $CFLAGS += " -I" + RbConfig::CONFIG['rubyhdrdir']+'/ruby'
 end
 
 $CFLAGS += " -I."
 have_func("rb_errinfo")
 PKGConfig.have_package("gdk-pixbuf-2.0") or exit(-1)
 PKGConfig.have_package("gdk-2.0") or exit(-1)
-have_header("gdk-pixbuf/gdk-pixbuf.h") or exit(-1)
-have_header("rbglib.h") or exit(-1)
-have_header("rbgobject.h") or exit(-1)
-have_header("tiffio.h") or exit(-1)
-have_header("gdk/gdk.h") or exit(-1)
+
+unless have_header("gdk-pixbuf/gdk-pixbuf.h")
+  paths = Gem.find_files("gdk-pixbuf/gdk-pixbuf.h")
+  paths.each do |path|
+    $CFLAGS += " '-I#{File.dirname(path)}'"
+  end
+  have_header("gdk-pixbuf/gdk-pixbuf.h") or exit -1
+end
+
+unless have_header("rbglib.h")
+  paths = Gem.find_files("rbglib.h")
+  paths.each do |path|
+    $CFLAGS += " '-I#{File.dirname(path)}'"
+  end
+  have_header("rbglib.h") or exit -1
+end
+
+unless have_header("rbgobject.h")
+  paths = Gem.find_files("rbgobject.h")
+  paths.each do |path|
+    $CFLAGS += " '-I#{File.dirname(path)}'"
+  end
+  have_header("rbgobject.h") or exit -1
+end
+
+unless have_header("tiffio.h")
+  paths = Gem.find_files("tiffio.h")
+  paths.each do |path|
+    $CFLAGS += " '-I#{File.dirname(path)}'"
+  end
+  have_header("tiffio.h") or exit -1
+end
+
+unless have_header("gdk/gdk.h")
+  paths = Gem.find_files("gdk/gdk.h")
+  paths.each do |path|
+    $CFLAGS += " '-I#{File.dirname(path)}'"
+  end
+  have_header("gdk/gdk.h") or exit -1
+end
 have_library("tiff") or exit(-1)
 $LIBS += " -ltiff"
 

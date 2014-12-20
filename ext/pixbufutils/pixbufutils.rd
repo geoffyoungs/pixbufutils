@@ -59,6 +59,9 @@
 --- PixbufUtils.mask(GdkPixbuf* src, GdkPixbuf* mask)
 
 
+--- PixbufUtils.auto_equalize(GdkPixbuf* src)
+
+
 --- PixbufUtils.blend5050(GdkPixbuf* src1, GdkPixbuf* src2)
 
 
