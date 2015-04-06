@@ -28,6 +28,54 @@ class TextPixbufUtils < MiniTest::Test
 
     assert_equal [78, 255, 78], pixels_after
   end
+  # These must be pre-balanced?
+  SHARPEN = [
+    -1, -1, -1, -1, -1,
+    -1,  2,  2,  2, -1,
+    -1,  2,  8,  2, -1,
+    -1,  2,  2,  2, -1,
+    -1, -1, -1, -1, -1,
+  ] # .map { |n| n/8.0 }
+  BLUR = [
+    0, 1, 1, 1, 0,
+    1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1,
+    0, 1, 1, 1, 0,
+  ] # .map { |n| n / 25.0 }
+  def test_filter
+    FileUtils.mkdir_p("output/filter")
+    Dir.glob("samples/*.*").each do |jpeg|
+      p File.basename(jpeg)
+      pb = Gdk::Pixbuf.new(jpeg)
+      out = PixbufUtils.filter(pb, SHARPEN, 8);
+      out.save(orig="output/filter/sharpen-#{File.basename jpeg, '.JPG'}.jpg", "jpeg")
+      out = PixbufUtils.filter(pb, BLUR, BLUR.inject(0) { |t,c| t + c });
+      out.save(orig="output/filter/blur-#{File.basename jpeg, '.JPG'}.jpg", "jpeg")
+      out = PixbufUtils.filter(pb, [0.8], 1);
+      out.save(orig="output/filter/darker-#{File.basename jpeg, '.JPG'}.jpg", "jpeg")
+      out = PixbufUtils.filter(pb, [1.2], 1);
+      out.save(orig="output/filter/light-#{File.basename jpeg, '.JPG'}.jpg", "jpeg")
+      out = PixbufUtils.contrast(pb, -10);
+      out.save(orig="output/filter/#{File.basename jpeg, '.JPG'}-less-contrast.jpg", "jpeg")
+      out = PixbufUtils.contrast(pb, 10);
+      out.save(orig="output/filter/#{File.basename jpeg, '.JPG'}-more-contrast.jpg", "jpeg")
+      out = PixbufUtils.vibrance(pb, -15);
+      out.save(orig="output/filter/#{File.basename jpeg, '.JPG'}-less-vib.jpg", "jpeg")
+      out = PixbufUtils.vibrance(pb, 15);
+      out.save(orig="output/filter/#{File.basename jpeg, '.JPG'}-more-vib.jpg", "jpeg")
+
+      out = PixbufUtils.brightness(pb, -15);
+      out.save(orig="output/filter/#{File.basename jpeg, '.JPG'}-less-bri.jpg", "jpeg")
+      out = PixbufUtils.brightness(pb, 15);
+      out.save(orig="output/filter/#{File.basename jpeg, '.JPG'}-more-bri.jpg", "jpeg")
+
+      out = PixbufUtils.saturation(pb, -15);
+      out.save(orig="output/filter/#{File.basename jpeg, '.JPG'}-less-sat.jpg", "jpeg")
+      out = PixbufUtils.saturation(pb, 15);
+      out.save(orig="output/filter/#{File.basename jpeg, '.JPG'}-more-sat.jpg", "jpeg")
+    end
+  end
   def test_equalize
     FileUtils.mkdir_p("output/auto_equalize")
     Dir.glob("samples/*.*").each do |jpeg|

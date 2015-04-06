@@ -48,6 +48,7 @@ extern void Init_pixbufutils(void);
 #include "soften-edges.h"
 #include "histogram.h"
 #include "auto-equalize.h"
+#include "filter.h"
 
 
 /*
@@ -287,6 +288,40 @@ module PixbufUtils
 	def unref_pixbuf:self.blur(GdkPixbuf *src, int radius)
     IGNORE(self);
 		return pixbuf_blur(gdk_pixbuf_copy(src), radius);
+	end
+	def unref_pixbuf:self.contrast(GdkPixbuf *src, int adjust)
+    IGNORE(self);
+		return pixbuf_adjust_contrast(src, gdk_pixbuf_copy(src), adjust);
+	end
+	def unref_pixbuf:self.vibrance(GdkPixbuf *src, int adjust)
+    IGNORE(self);
+		return pixbuf_adjust_vibrance(src, gdk_pixbuf_copy(src), adjust);
+	end
+	def unref_pixbuf:self.saturation(GdkPixbuf *src, int adjust)
+    IGNORE(self);
+		return pixbuf_adjust_saturation(src, gdk_pixbuf_copy(src), adjust);
+	end
+	def unref_pixbuf:self.brightness(GdkPixbuf *src, int adjust)
+    IGNORE(self);
+		return pixbuf_adjust_brightness(src, gdk_pixbuf_copy(src), adjust);
+	end
+	def unref_pixbuf:self.filter(GdkPixbuf *src, T_ARRAY filter, double divisor)
+    int matrix_size = RARRAY_LEN(filter), len, i;
+    double *matrix;
+
+    IGNORE(self);
+    len = (int) sqrt((double)matrix_size);
+
+    if ((len * len) != matrix_size) {
+			rb_raise(rb_eArgError, "Invalid matrix size - sqrt(%i)*sqrt(%i) != %i", matrix_size, matrix_size, matrix_size);
+    }
+    matrix = ALLOCA_N(double, matrix_size);
+
+    for (i = 0; i < matrix_size; i ++) {
+      matrix[i] = NUM2DBL(RARRAY_PTR(filter)[i]);
+    }
+
+		return pixbuf_convolution_matrix(src, gdk_pixbuf_copy(src), len, matrix, divisor);
 	end
 	def unref_pixbuf:self.rotate_90(GdkPixbuf *src, bool counter_clockwise)
     IGNORE(self);

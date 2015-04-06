@@ -11,6 +11,21 @@
 --- PixbufUtils.blur(GdkPixbuf* src, Integer radius)
 
 
+--- PixbufUtils.contrast(GdkPixbuf* src, Integer adjust)
+
+
+--- PixbufUtils.vibrance(GdkPixbuf* src, Integer adjust)
+
+
+--- PixbufUtils.saturation(GdkPixbuf* src, Integer adjust)
+
+
+--- PixbufUtils.brightness(GdkPixbuf* src, Integer adjust)
+
+
+--- PixbufUtils.filter(GdkPixbuf* src, Array filter, double divisor)
+
+
 --- PixbufUtils.rotate_90(GdkPixbuf* src, Boolean counter_clockwise)
 
 
