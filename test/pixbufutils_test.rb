@@ -36,6 +36,15 @@ class TextPixbufUtils < MiniTest::Test
     -1,  2,  2,  2, -1,
     -1, -1, -1, -1, -1,
   ] # .map { |n| n/8.0 }
+  SHARPEN2 = [
+   -0.5, -0.5, -0.5, -0.5, -0.5, -0.5, -0.5,
+   -0.5,   -1,   -1,   -1,   -1,   -1, -0.5,
+   -0.5,   -1,    3,    3,    3,   -1, -0.5,
+   -0.5,   -1,    3,    9,    3,   -1, -0.5,
+   -0.5,   -1,    3,    3,    3,   -1, -0.5,
+   -0.5,   -1,   -1,   -1,   -1,   -1, -0.5,
+   -0.5, -0.5, -0.5, -0.5, -0.5, -0.5, -0.5,
+  ] # .map { |n| n/8.0 }
   BLUR = [
     0, 1, 1, 1, 0,
     1, 1, 1, 1, 1,
@@ -50,6 +59,9 @@ class TextPixbufUtils < MiniTest::Test
       pb = Gdk::Pixbuf.new(jpeg)
       out = PixbufUtils.filter(pb, SHARPEN, 8);
       out.save(orig="output/filter/sharpen-#{File.basename jpeg, '.JPG'}.jpg", "jpeg")
+      matrix = SHARPEN2 #.map{|_|_ > 0 ?_*2}
+      out = PixbufUtils.filter(pb, matrix, matrix.inject(0,&:+));
+      out.save(orig="output/filter/sharpen-#{File.basename jpeg, '.JPG'}-2.jpg", "jpeg")
       out = PixbufUtils.filter(pb, BLUR, BLUR.inject(0) { |t,c| t + c });
       out.save(orig="output/filter/blur-#{File.basename jpeg, '.JPG'}.jpg", "jpeg")
       out = PixbufUtils.filter(pb, [0.8], 1);
